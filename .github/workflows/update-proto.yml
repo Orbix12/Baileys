@@ -1,0 +1,81 @@
+name: Update WAProto
+
+on:
+  schedule:
+    - cron: '10 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-proto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Enable Corepack and Set Yarn Version
+        run: |
+          corepack enable
+          corepack prepare yarn@4.x --activate
+
+      - name: Install packages
+        run: |
+          npm install --no-audit --no-fund
+          yarn --cwd proto-extract install --immutable
+
+      - name: Extract WhatsApp Web protocol schema
+        id: wa_proto_info
+        shell: bash
+        run: |
+          set -euo pipefail
+          yarn --cwd proto-extract start | tee wa-logs.txt
+          WA_VERSION="$(sed -nE 's/^Current version: ([0-9]+\.[0-9]+\.[0-9]+)$/\1/p' wa-logs.txt | tail -n 1)"
+          WA_JS_URL="$(sed -nE 's/^Found source JS URL: (https:\/\/[^ ]+)$/\1/p' wa-logs.txt | tail -n 1)"
+          if [[ ! "$WA_VERSION" =~ ^2\.3000\.[0-9]+$ ]]; then
+            echo "Could not extract a valid WhatsApp Web version; refusing to update proto." >&2
+            exit 1
+          fi
+          if [[ ! "$WA_JS_URL" =~ ^https:// ]]; then
+            echo "Could not extract a valid HTTPS source URL; refusing to update proto." >&2
+            exit 1
+          fi
+          echo "wa_version=$WA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "wa_js_url=$WA_JS_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Generate protobuf statics
+        run: npm run gen:protobuf
+
+      - name: Synchronize all bundled version declarations
+        env:
+          WA_VERSION: ${{ steps.wa_proto_info.outputs.wa_version }}
+        run: npm run update:version
+
+      - name: Type-check and build both module formats
+        run: npm run build:dual
+
+      - name: Run unit tests
+        run: npm test -- --runInBand
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: 'chore: updated proto/version to v${{steps.wa_proto_info.outputs.wa_version}}'
+          title: 'Whatsapp v${{steps.wa_proto_info.outputs.wa_version}} proto/version change'
+          branch: 'update-proto/stable'
+          delete-branch: true
+          labels: 'update-proto'
+          body: "Automated changes\nFound source JS URL: ${{steps.wa_proto_info.outputs.wa_js_url}}\nCurrent version: v${{steps.wa_proto_info.outputs.wa_version}}"
+          add-paths: |
+            WAProto/*
+            src/Defaults/baileys-version.json
+            src/Defaults/index.ts
+            src/Utils/generics.ts

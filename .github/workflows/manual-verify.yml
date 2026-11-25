@@ -1,0 +1,30 @@
+name: Manual Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify fixed package version
+        run: node -e "if (require('./package.json').version !== '1.0.0') process.exit(1)"
+      - name: Type check
+        run: npm run check:types
+      - name: Unit tests
+        run: npm test -- --runInBand
+      - name: Build ESM and CommonJS
+        run: npm run build:dual
+      - name: Check package contents
+        run: npm pack --dry-run --ignore-scripts

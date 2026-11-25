@@ -1,0 +1,153 @@
+import { randomBytes } from 'crypto'
+import { Mutex } from 'async-mutex'
+import { mkdir, readFile, rename, stat, unlink, writeFile } from 'fs/promises'
+import { join } from 'path'
+import { proto } from '../../WAProto/index.js'
+import type { AuthenticationCreds, AuthenticationState, SignalDataTypeMap } from '../Types/index.js'
+import { initAuthCreds } from './auth-utils.js'
+import { BufferJSON } from './generics.js'
+
+// We need to lock files due to the fact that we are using async functions to read and write files
+// https://github.com/WhiskeySockets/Baileys/issues/794
+// https://github.com/nodejs/node/issues/26338
+// Use a Map to store mutexes for each file path
+const fileLocks = new Map<string, Mutex>()
+
+// Get or create a mutex for a specific file path
+const getFileLock = (path: string): Mutex => {
+	let mutex = fileLocks.get(path)
+	if (!mutex) {
+		mutex = new Mutex()
+		fileLocks.set(path, mutex)
+	}
+
+	return mutex
+}
+
+/**
+ * stores the full authentication state in a single folder.
+ * Far more efficient than singlefileauthstate
+ *
+ * Again, I wouldn't endorse this for any production level use other than perhaps a bot.
+ * Would recommend writing an auth state for use with a proper SQL or No-SQL DB
+ * */
+export const useMultiFileAuthState = async (
+	folder: string
+): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> => {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const writeData = async (data: any, file: string) => {
+		const filePath = join(folder, fixFileName(file)!)
+		const mutex = getFileLock(filePath)
+
+		return mutex.acquire().then(async (release: () => void) => {
+			const temporaryPath = `${filePath}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`
+			try {
+				// Write beside the destination and atomically rename to avoid leaving
+				// truncated auth/key JSON files if the process exits mid-write.
+				await writeFile(temporaryPath, JSON.stringify(data, BufferJSON.replacer), {
+					encoding: 'utf8',
+					mode: 0o600,
+					flag: 'wx'
+				})
+				await rename(temporaryPath, filePath)
+			} catch (error) {
+				await unlink(temporaryPath).catch(() => undefined)
+				throw error
+			} finally {
+				release()
+			}
+		})
+	}
+
+	const readData = async (file: string) => {
+		try {
+			const filePath = join(folder, fixFileName(file)!)
+			const mutex = getFileLock(filePath)
+
+			return await mutex.acquire().then(async (release: () => void) => {
+				try {
+					const data = await readFile(filePath, { encoding: 'utf-8' })
+					return JSON.parse(data, BufferJSON.reviver)
+				} finally {
+					release()
+				}
+			})
+		} catch (error) {
+			// A missing key is expected; malformed or unreadable auth JSON is not.
+			// Do not silently create fresh credentials over a damaged session.
+			if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
+				return null
+			}
+			throw error
+		}
+	}
+
+	const removeData = async (file: string) => {
+		try {
+			const filePath = join(folder, fixFileName(file)!)
+			const mutex = getFileLock(filePath)
+
+			return mutex.acquire().then(async (release: () => void) => {
+				try {
+					await unlink(filePath)
+				} catch {
+				} finally {
+					release()
+				}
+			})
+		} catch {}
+	}
+
+	const folderInfo = await stat(folder).catch(() => {})
+	if (folderInfo) {
+		if (!folderInfo.isDirectory()) {
+			throw new Error(
+				`found something that is not a directory at ${folder}, either delete it or specify a different location`
+			)
+		}
+	} else {
+		await mkdir(folder, { recursive: true })
+	}
+
+	const fixFileName = (file?: string) => file?.replace(/\//g, '__')?.replace(/:/g, '-')
+
+	const creds: AuthenticationCreds = (await readData('creds.json')) || initAuthCreds()
+
+	return {
+		state: {
+			creds,
+			keys: {
+				get: async (type, ids) => {
+					const data: { [_: string]: SignalDataTypeMap[typeof type] } = {}
+					await Promise.all(
+						ids.map(async id => {
+							let value = await readData(`${type}-${id}.json`)
+							if (type === 'app-state-sync-key' && value) {
+								value = proto.Message.AppStateSyncKeyData.fromObject(value)
+							}
+
+							data[id] = value
+						})
+					)
+
+					return data
+				},
+				set: async data => {
+					const tasks: Promise<void>[] = []
+					for (const category in data) {
+						for (const id in data[category as keyof SignalDataTypeMap]) {
+							const value = data[category as keyof SignalDataTypeMap]![id]
+							const file = `${category}-${id}.json`
+							tasks.push(value ? writeData(value, file) : removeData(file))
+						}
+					}
+
+					await Promise.all(tasks)
+				}
+			}
+		},
+		saveCreds: async () => {
+			return writeData(creds, 'creds.json')
+		}
+	}
+}

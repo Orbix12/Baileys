@@ -1,0 +1,33 @@
+name: PR Comment
+
+on:
+  pull_request_target:
+    types:
+      - opened
+
+permissions:
+  issues: write
+
+jobs:
+  pr-comment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Post contributor guidance
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file - <<'EOF'
+          Thanks for opening this pull request and contributing to VamXRepan Baileys!
+
+          Maintainers will review the change. Please include the exact Node.js version, the command you ran, and a minimal reproducible test when reporting a failure. Never attach WhatsApp auth/session folders, private keys, or account credentials.
+
+          To test locally after checking out this PR in the configured repository:
+
+          ```bash
+          npm install
+          npm test -- --runInBand
+          npm run build:dual
+          ```
+          EOF
