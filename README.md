@@ -87,12 +87,12 @@ URL GitHub publik belum dapat diverifikasi, sehingga metadata paket tidak menyer
 Setelah package dipublikasikan dan tersedia pada registry, instal dengan:
 
 ```bash
-npm install @vamxrepan/baileys
+npm install @orbix12/baileys
 ```
 
 ### Dari arsip source ZIP
 
-Ekstrak `vamxrepan-baileys-github-v1.0.0.zip`, masuk ke folder project, lalu jalankan:
+Ekstrak `note wajib install di project lu`, masuk ke folder project, lalu jalankan:
 
 ```bash
 npm install
@@ -102,10 +102,10 @@ npm test
 
 ### Dari tarball npm lokal
 
-Setelah mengunduh `vamxrepan-baileys-1.0.0.tgz`, jalankan:
+Setelah mengunduh `baileys`, jalankan:
 
 ```bash
-npm install ./vamxrepan-baileys-1.0.0.tgz
+npm start
 ```
 
 **Status distribusi:** arsip ZIP dan tarball dapat dibuat serta dipasang secara lokal. Repository GitHub pemilik dan publikasi ke registry npm belum dilakukan dari paket ini; jangan menganggap tautan GitHub/npm publik sudah aktif sebelum pemilik menghubungkannya.
@@ -118,7 +118,7 @@ Buat `index.js`:
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason
-} from '@vamxrepan/baileys'
+} from '@orbix12/baileys'
 
 const { state, saveCreds } = await useMultiFileAuthState('./auth_info')
 
@@ -169,7 +169,7 @@ Ganti JID contoh dengan tujuan yang benar. Contoh ini baru mencoba kirim setelah
 Package juga menyediakan entry CommonJS:
 
 ```js
-const makeWASocket = require('@vamxrepan/baileys')
+const makeWASocket = require('@orbix12/baileys')
 const { useMultiFileAuthState, DisconnectReason } = makeWASocket
 
 async function main() {
@@ -319,7 +319,7 @@ Arti `ok: true` adalah operasi lokal sudah disubmit/selesai pada jalur send yang
 Untuk menonaktifkan cetakan diagnostic pada instance facade mandiri (event dan exception tetap tersedia):
 
 ```js
-import { VamXRepanMessage } from '@vamxrepan/baileys'
+import { VamXRepanMessage } from '@orbix12/baileys'
 const Message = new VamXRepanMessage(VamXRepan, { diagnostics: false })
 ```
 
@@ -330,7 +330,7 @@ Facade bawaan `VamXRepan.Message` mengaktifkan diagnostic secara default.
 Arsip source ZIP dan tarball npm lokal sudah tersedia, tetapi repository GitHub pemilik dan rilis registry belum dipublikasikan dari lingkungan ini. Untuk mengaktifkan workflow rilis setelah repository dibuat:
 
 1. Push source ZIP yang sudah diekstrak ke repository GitHub milik maintainer pada branch `main`.
-2. Pastikan maintainer memang memiliki akses publish ke scope npm `@vamxrepan`.
+2. Pastikan maintainer memang memiliki akses publish ke scope npm `@orbix12`.
 3. Tambahkan secret repository `NPM_TOKEN` pada **Settings → Secrets and variables → Actions**.
 4. Jalankan pemeriksaan manual terlebih dahulu. Workflow manual akan menolak versi selain `1.0.0`.
 5. Setelah semua pemeriksaan lolos, buat dan push tag `v1.0.0` untuk memicu publish.
@@ -483,7 +483,7 @@ Example/              Contoh penggunaan dan pengembangan
 VamXRepan Baileys merupakan fork komunitas dari [WhiskeySockets/Baileys](https://github.com/RepanGanteng/Baileys). Hak cipta dan atribusi kontributor upstream tetap dihormati. Lisensi project mengikuti berkas [LICENSE](LICENSE).
 
 - **Brand:** VamXRepan
-- **Package npm:** `@vamxrepan/baileys`
+- **Package npm:** `@orbix12/baileys`
 - **Versi:** `1.0.0`
 - **GitHub source:** arsip ZIP siap diunggah ke repository yang dikendalikan maintainer.
-- **npm target:** `@vamxrepan/baileys` (publikasi perlu dilakukan pemilik scope).
+- **npm target:** `@orbix12/baileys` (publikasi perlu dilakukan pemilik scope).
