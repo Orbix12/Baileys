@@ -3,7 +3,7 @@
   <br />
   <img src="Media/vamxrepan-wordmark.jpg" alt="VamXRepan Baileys wordmark" width="88%" />
 
-  # @VamXRepan/Baileys
+  # @Orbix12/Baileys
 
   **WhatsApp Web socket toolkit · Unified message API · TypeScript + JavaScript**
 
