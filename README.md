@@ -25,14 +25,14 @@
     <img alt="Protocol Buffers" src="https://img.shields.io/badge/Protocol%20Buffers-WAProto-6B7280?style=flat-square&logo=protobuf&logoColor=white" />
   </p>
 
-  **Created by VamXRepan** · Fork of [WhiskeySockets/Baileys](https://github.com/WhiskeySockets/Baileys)
+  **Created by VamTzy And RepanOffcl** · Fork of [WhiskeySockets/Baileys](https://github.com/WhiskeySockets/Baileys)
 </div>
 
 ---
 
 ## Tentang proyek
 
-**VamXRepan Baileys** adalah fork TypeScript/JavaScript untuk berkomunikasi dengan WhatsApp Web melalui protokol multi-device. Paket ini mempertahankan jalur inti Baileys—termasuk koneksi WebSocket, enkripsi Signal, pengiriman media terautentikasi, fan-out perangkat, retry protocol, dan protobuf—serta menyediakan satu facade pengiriman tingkat tinggi:
+**Orbix12 Baileys** adalah fork TypeScript/JavaScript untuk berkomunikasi dengan WhatsApp Web melalui protokol multi-device. Paket ini mempertahankan jalur inti Baileys—termasuk koneksi WebSocket, enkripsi Signal, pengiriman media terautentikasi, fan-out perangkat, retry protocol, dan protobuf—serta menyediakan satu facade pengiriman tingkat tinggi:
 
 ```js
 VamXRepan.Message
@@ -46,10 +46,10 @@ Gunakan facade ini untuk pesan teks, media, dokumen, stiker, URL, interaksi, dan
 
 | Distribusi | Nama | Tujuan |
 | --- | --- | --- |
-| GitHub source | `VamXRepan-Baileys` | Source TypeScript, generated output, tests, docs, workflows, dan aset |
-| npm | `@vamxrepan/baileys` | Paket runtime ESM + CommonJS beserta deklarasi TypeScript |
+| GitHub source | `Orbix12-Baileys` | Source TypeScript, generated output, tests, docs, workflows, dan aset |
+| npm | `@orbix12/baileys` | Paket runtime ESM + CommonJS beserta deklarasi TypeScript |
 
-**Versi proyek tetap `1.0.0`.** Nama tampilan boleh ditulis `@VamXRepan/Baileys`, tetapi nama package npm yang canonical adalah lowercase `@vamxrepan/baileys`.
+**Versi proyek tetap `1.0.0`.** Nama tampilan boleh ditulis `@orbix12/Baileys`, tetapi nama package npm yang canonical adalah lowercase `@orbix12/baileys`.
 
 - GitHub source: tersedia sebagai arsip source ZIP; repository publik belum ditautkan karena URL pemilik sebelumnya tidak bisa diverifikasi.
 - npm: <https://www.npmjs.com/package/@vamxrepan/baileys> (aktif setelah package diterbitkan dan registry menampilkan versi `1.0.0`).
